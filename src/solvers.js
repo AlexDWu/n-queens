@@ -47,12 +47,17 @@ window.findNQueensSolution = function(n) {
   var callback = function(board) {
     // set solution to board matrix
     var oldRows = board.rows();
+    // perform a deep copy because the board stores pointers to the matrix rather than save a new copy of the matrix
+    // so we have to create a copy of the matrix, via copying all the arrays, then storing them in a new board
     var newRows = [];
     for (var i=0; i<oldRows.length; i++) {
       newRows[i] = oldRows[i].slice();
     }
     solution = new Board(newRows);
-    // debugger;
+    // recursion helpFunction can stop once we've found ONE solution
+    // a good way to inform our calling function that we're done is by returning a value
+    // in this case, we choose this value to be true
+    return true;
   };
   // call helperfunction
   helpFunction(new Board({n:n}), n, callback, 0);
@@ -68,7 +73,10 @@ window.countNQueensSolutions = function(n) {
   var counter = 0;
 
   // callback function that just increments solution count when a solution is found
-  var pushSolutions = function(board) {counter++;};
+  var pushSolutions = function(board) {
+    counter++;
+    return false;
+  };
   // call helper funciton with callback
   helpFunction(new Board({n:n}), n, pushSolutions, 0);
 
@@ -90,7 +98,10 @@ function helpFunction(board, n, callback, rowBlocked) {
   // n is zero
   if(n===0) {
     // invoke the callback with the board
-    callback(board);
+    // if our callback function is done running and doesn't require any more recursions to look for more solutions
+    // they return true
+    // so to break out of the recursion chain, we return the value true to the calling function
+    return callback(board);
   }
   // else case
   else {
@@ -109,7 +120,12 @@ function helpFunction(board, n, callback, rowBlocked) {
           if(!board.hasAnyQueenConflictsOn(i,j)) {
           // if no conflicts
             // recurse(board, n-1) 
-            helpFunction(board, n-1, callback, i+1);
+            if(helpFunction(board, n-1, callback, i+1)) {
+              // if we want to continue running the for loop, we do nothing here
+              // but if we want to break out of the loop and stop, we return
+              // and since it's recursed, we need to return true to current calling function
+              return true;
+            }
           }
           // remove the queen from currentSpot
           board.togglePiece(i,j);
@@ -117,6 +133,7 @@ function helpFunction(board, n, callback, rowBlocked) {
       }
     }
   }
+  return false;
 };
 
 
